@@ -10,3 +10,9 @@ remote_state {
     }
 }
 
+provider "aws" {
+    region =  "${local.primary_region}"
+    assume_role {
+        role_arn = "<ARN>"
+    }
+}
