@@ -1,28 +1,173 @@
-# Simple SIEM (WIP)
-Terraform code is commonly provided by SIEM vendors to deploy associated resources, but this code is often shown in a way that will not scale well and creates unnecessary resources.
+# Simple SIEM Infrastructure
 
-This repo shows one way to adjust the code from a few sample vendors to make it usuable in an enterprise environment where IaC is established.
+This repository provides Terraform configurations for deploying SIEM (Security Information and Event Management) infrastructure in AWS with minimal resource sprawl. It's designed for enterprises with established Infrastructure as Code (IaC) practices. It is recommended to use this in conjunction with existing CI/CD pipelines such as GitHub Actions. Adjust the code as necessary to fit your environment.
 
-No promises about the quality or that is will work as expected in your environment - this should serve more as a starting point than anything else. 
+## Overview
 
-The setup is geared toward AWS, but the logic should be transferrable to other cloud providers.
+SIEM vendors often provide Terraform code that creates unnecessary duplicate resources or doesn't scale well in enterprise environments. This implementation focuses on:
 
-Directions aren't provided for full setup - see the docs for setup information.
+* Single IAM role per SIEM vendor per AWS account
+* Single SNS topic per AWS account
+* Per-bucket policies for each vendor
+* KMS policies as needed
+* SNS notifications to SQS queues for each vendor
 
-[Terraform](https://www.terraform.io/) will be used for the examples. [OpenTofu](https://opentofu.org/) examples may be added, but the two are generally fairly straightforward to switch between.
+## Prerequisites
 
-[Terragrunt](https://terragrunt.gruntwork.io/) stacks will be used to help keep the code DRY. There is additional functionality (like auto-init) that make Terragrunt a nice option for dealing with resource deployment.
+- [Terraform](https://www.terraform.io/) >= 1.0.0
+- AWS CLI configured with appropriate credentials and/or
+- GitHub Action configured to deploy resources to AWS
+- S3 bucket for Terraform state
+- Access to target AWS accounts
+- SIEM vendor accounts (Panther, Scanner)
 
-This set up requires a functional CI/CD pipeline with integration to AWS accounts.
+## Repository Structure
 
- # Desired Outcomes
+```
+.
+├── modules/
+│   ├── iam/
+│   │   ├── panther/        # Panther-specific IAM configurations
+│   │   └── scanner/        # Scanner-specific IAM configurations
+│   ├── s3/                 # S3 bucket access configurations
+│   └── sns/                # SNS/SQS notification configurations
+├── main.tf                 # Main Terraform configuration
+├── variables.tf            # Variable definitions
+└── providers.tf            # Provider configurations
+```
 
-The goal is to deploy the required resources to ingest logs with minimal resource sprawl.
-* A single IAM role per SIEM vendor per AWS account
-* A single SNS topic per AWS account
-* Per bucket policies for each vendor in each account
-* KMS policies as needed for each vendor in each account
-* SNS notifications on the SQS queues for each vendor in each account
+## Setup Instructions (quick)
+1. Clone this repository:
+```bash
+git clone https://github.com/yourusername/simple-siem-iac.git
+cd simple-siem-iac
+```
+2. Pull the modules over to where AWS infrastructure is deployed.
+3. Use the `main.tf` file as your module to deploy resources. Update the information as needed.
+
+_Be sure to address the providers.tf file to update the backend and any tagging needs_
 
 
-Code has been kept granular to allow for flexibility in setup.
+## Setup Instructions (full)
+
+1. Clone this repository:
+```bash
+git clone https://github.com/yourusername/simple-siem-iac.git
+cd simple-siem-iac
+```
+
+2. Create a `terraform.tfvars` file:
+```hcl
+env                = "dev"
+panther_account_id = "123456789012"
+panther_region     = "us-east-1"
+scanner_account_id = "210987654321"
+scanner_region     = "us-east-1"
+scanner_external_id = "your-external-id"
+```
+
+3. Update the backend configuration in `providers.tf`:
+```hcl
+backend "s3" {
+    bucket         = "your-terraform-state-bucket"
+    key            = "siem/terraform.tfstate"
+    region         = "us-east-1"
+    encrypt        = true
+    dynamodb_table = "terraform-lock-table"
+}
+```
+
+4. Initialize Terraform:
+```bash
+terraform init
+```
+
+5. Plan and apply the changes:
+```bash
+terraform plan -out=tfplan
+terraform apply tfplan
+```
+
+## Module Configuration
+
+### IAM Module
+Configures IAM roles for SIEM vendors:
+```hcl
+module "panther_iam" {
+  source             = "./modules/iam/panther"
+  env                = "dev"
+  panther_account_id = "123456789012"
+}
+```
+
+### S3 Access Module
+Configures bucket access for vendors:
+```hcl
+module "s3_bucket_access" {
+  source            = "./modules/s3/"
+  bucket_configs = [
+    {
+      bucket_arn     = "arn:aws:s3:::your-bucket"
+      bucket_id      = "your-bucket"
+      bucket_kms_arn = "arn:aws:kms:region:account:key/key-id"  # Optional
+    }
+  ]
+}
+```
+
+### SNS Module
+Sets up notifications:
+```hcl
+module "sns" {
+  source             = "./modules/sns"
+  env                = "dev"
+  panther_account_id = "123456789012"
+  panther_region     = "us-east-1"
+}
+```
+
+## Important Notes
+
+1. **Order of Operations**: 
+   - Deploy IAM roles first
+   - Set up vendor accounts
+   - Deploy SNS/SQS configurations last
+
+2. **Security Considerations**:
+   - Use KMS encryption for sensitive buckets
+   - Follow least privilege principle for IAM roles
+   - Enable AWS CloudTrail for audit logging
+
+3. **Maintenance**:
+   - Regularly update provider versions
+   - Monitor IAM role usage
+   - Review bucket policies periodically
+
+## Vendor Integration
+
+### Panther
+1. Create Panther account
+2. Deploy IAM role
+3. Add AWS account to Panther console
+4. Deploy SNS/SQS configurations
+
+### Scanner
+1. Obtain Scanner external ID
+2. Deploy IAM role
+3. Configure Scanner with role ARN
+4. Deploy SNS/SQS configurations
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit changes
+4. Create a pull request
+
+## License
+
+MIT Licence
+
+## Support
+
+No support is promised or provided.
