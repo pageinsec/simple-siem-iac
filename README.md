@@ -13,4 +13,13 @@ Directions aren't provided for full setup - see the docs for setup information.
 
 [Terragrunt](https://terragrunt.gruntwork.io/) stacks will be used to help keep the code DRY. There is additional functionality (like auto-init) that make Terragrunt a nice option for dealing with resource deployment.
 
- 
+ # Desired Outcomes
+
+The goal is to deploy the required resources to ingest logs with minimal resource sprawl.
+* A single IAM role per SIEM vendor per AWS account
+* A single SNS topic per AWS account
+* Per bucket policies for each vendor in each account
+* KMS policies as needed for each vendor in each account
+* SNS notifications on the SQS queues for each vendor in each account
+
+
