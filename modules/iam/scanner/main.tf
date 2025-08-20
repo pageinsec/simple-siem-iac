@@ -41,7 +41,7 @@ resource "aws_iam_role_policy" "scanner_read_buckets_policy" {
       }
     ]
   })
-  
+
 }
 
 
@@ -106,25 +106,25 @@ resource "aws_s3_bucket_lifecycle_configuration" "scanner_index_files_bucket_lif
 
 # Configure access to S3 index bucket
 resource "aws_iam_role_policy" "scanner_index_policy" {
-  name   = "ScannerIndexBucketPolicy"
-  role   = aws_iam_role.scanner_role.name
+  name = "ScannerIndexBucketPolicy"
+  role = aws_iam_role.scanner_role.name
   policy = jsonencode({
-    Version  : "2012-10-17",
+    Version : "2012-10-17",
     Statement : [
       {
         Effect : "Allow",
         Action : [
-            "s3:GetEncryptionConfiguration",
-            "s3:GetLifecycleConfiguration",
-            "s3:DeleteObject",
-            "s3:DeleteObjectTagging",
-            "s3:DeleteObjectVersion",
-            "s3:DeleteObjectVersionTagging",
-            "s3:GetObject",
-            "s3:GetObjectTagging",
-            "s3:ListBucket",
-            "s3:PutObject",
-            "s3:PutObjectTagging",
+          "s3:GetEncryptionConfiguration",
+          "s3:GetLifecycleConfiguration",
+          "s3:DeleteObject",
+          "s3:DeleteObjectTagging",
+          "s3:DeleteObjectVersion",
+          "s3:DeleteObjectVersionTagging",
+          "s3:GetObject",
+          "s3:GetObjectTagging",
+          "s3:ListBucket",
+          "s3:PutObject",
+          "s3:PutObjectTagging",
         ],
         Resource = [
           aws_s3_bucket.scanner_index_files_bucket.arn,

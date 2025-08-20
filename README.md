@@ -13,6 +13,8 @@ Directions aren't provided for full setup - see the docs for setup information.
 
 [Terragrunt](https://terragrunt.gruntwork.io/) stacks will be used to help keep the code DRY. There is additional functionality (like auto-init) that make Terragrunt a nice option for dealing with resource deployment.
 
+This set up requires a functional CI/CD pipeline with integration to AWS accounts.
+
  # Desired Outcomes
 
 The goal is to deploy the required resources to ingest logs with minimal resource sprawl.
@@ -23,3 +25,4 @@ The goal is to deploy the required resources to ingest logs with minimal resourc
 * SNS notifications on the SQS queues for each vendor in each account
 
 
+Code has been kept granular to allow for flexibility in setup.
